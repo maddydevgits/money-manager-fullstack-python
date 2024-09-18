@@ -19,6 +19,9 @@ class Transaction(db.Model):
     date = db.Column(db.DateTime, nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
 
+    # New field to track income vs expense
+    transaction_type = db.Column(db.String(10), nullable=False, default='expense')
+
     # New fields for recurring transactions
     is_recurring = db.Column(db.Boolean, default=False, nullable=False)
     recurrence_frequency = db.Column(db.String(20))  # e.g., 'daily', 'weekly', 'monthly'

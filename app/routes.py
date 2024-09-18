@@ -34,6 +34,7 @@ main = Blueprint('main', __name__)
 
 @main.route('/')
 def home():
+    logout_user()
     return render_template('index.html')
 
 @main.route("/register", methods=['GET', 'POST'])
@@ -70,38 +71,48 @@ def logout():
     logout_user()
     return redirect(url_for('main.home'))
 
-@main.route("/account")
+@main.route("/account", methods=['GET', 'POST'])
 @login_required
 def account():
-    # Call the recurring transaction function
-    add_recurring_transactions()
+    filter_form = FilterForm()
 
-    transactions = Transaction.query.filter_by(user_id=current_user.id).all()
-    
-    # Get the current month
+    # Fetch all transactions for the current user
+    transactions = Transaction.query.filter_by(user_id=current_user.id)
+
+    # Apply filters if needed
+    if filter_form.validate_on_submit():
+        if filter_form.category.data != 'All':
+            transactions = transactions.filter_by(category=filter_form.category.data)
+        if filter_form.start_date.data:
+            transactions = transactions.filter(Transaction.date >= filter_form.start_date.data)
+        if filter_form.end_date.data:
+            transactions = transactions.filter(Transaction.date <= filter_form.end_date.data)
+
+    transactions = transactions.all()
+
+    # Calculate total income, total expenses, and balance
+    total_income = sum(t.amount for t in transactions if t.transaction_type == 'income')
+    total_expenses = sum(t.amount for t in transactions if t.transaction_type == 'expense')
+    balance = total_income - total_expenses
+
+    # Budget and spending logic
     current_month = datetime.now().strftime('%Y-%m')
-    
-    # Fetch user's budgets for the current month
     budgets = Budget.query.filter_by(user_id=current_user.id, month=current_month).all()
-    
-    # Calculate the total spent per category
     spending = db.session.query(
         Transaction.category, func.sum(Transaction.amount)
     ).filter(Transaction.user_id == current_user.id, func.strftime('%Y-%m', Transaction.date) == current_month).group_by(Transaction.category).all()
-    
-    # Map the spending to a dictionary
     spending_dict = {category: total for category, total in spending}
-    
-    # Check for budget alerts
+
+    # Budget alerts logic
     budget_alerts = []
     for budget in budgets:
         spent = spending_dict.get(budget.category, 0)
         if spent > budget.amount:
             budget_alerts.append(f"You have exceeded your budget for {budget.category}!")
-        elif spent >= 0.9 * budget.amount:  # Alert if 90% of the budget is spent
+        elif spent >= 0.9 * budget.amount:
             budget_alerts.append(f"You are close to exceeding your budget for {budget.category}.")
-    
-    return render_template('account.html', title='Account', transactions=transactions, budgets=budgets, spending_dict=spending_dict, budget_alerts=budget_alerts)
+
+    return render_template('account.html', title='Account', transactions=transactions, budgets=budgets, spending_dict=spending_dict, budget_alerts=budget_alerts, total_income=total_income, total_expenses=total_expenses, balance=balance, form=filter_form)
 
 @main.route("/add_transaction", methods=['GET', 'POST'])
 @login_required
@@ -112,6 +123,7 @@ def add_transaction():
             amount=form.amount.data,
             category=form.category.data,
             date=form.date.data,
+            transaction_type=form.transaction_type.data,  # Add the transaction type (income or expense)
             user_id=current_user.id
         )
         db.session.add(transaction)
@@ -124,25 +136,37 @@ def add_transaction():
 @login_required
 def edit_transaction(transaction_id):
     transaction = Transaction.query.get_or_404(transaction_id)
+    
+    # Ensure only the owner of the transaction can edit it
     if transaction.user_id != current_user.id:
         flash('You do not have permission to edit this transaction.', 'danger')
         return redirect(url_for('main.account'))
     
     form = TransactionForm()
+    
     if form.validate_on_submit():
+        # Update the transaction with the new data from the form
         transaction.amount = form.amount.data
         transaction.category = form.category.data
         transaction.date = form.date.data
+        print(transaction.amount,transaction.category,transaction.date)
         db.session.commit()
         flash('Transaction updated successfully!', 'success')
         return redirect(url_for('main.account'))
+    else:
+        print("Form did not validate")
+        print(form.amount.data)
+        print(form.category.data)
+        print(form.date.data)
+        print(form.errors)
     
-    elif request.method == 'GET':
+    # Pre-populate the form on GET request
+    if request.method == 'GET':
         form.amount.data = transaction.amount
         form.category.data = transaction.category
         form.date.data = transaction.date
-    
-    return render_template('edit_transaction.html', title='Edit Transaction', form=form)
+
+    return render_template('edit_transaction.html', form=form)
 
 @main.route("/transaction/<int:transaction_id>/delete", methods=['POST'])
 @login_required
@@ -182,7 +206,7 @@ def filter_transactions():
 
     if form.validate_on_submit():
         if form.keyword.data:
-            transactions = transactions.filter(Transaction.description.contains(form.keyword.data))
+            transactions = transactions.filter(Transaction.category.contains(form.keyword.data))
         if form.category.data != 'All':
             transactions = transactions.filter_by(category=form.category.data)
         if form.start_date.data:
@@ -230,19 +254,40 @@ def add_recurring_transactions():
 @main.route("/export/csv")
 @login_required
 def export_transactions_csv():
-    # Get the current user's transactions
-    transactions = Transaction.query.filter_by(user_id=current_user.id).all()
+    # Separate income and expense transactions
+    income_transactions = Transaction.query.filter_by(user_id=current_user.id, transaction_type='income').all()
+    expense_transactions = Transaction.query.filter_by(user_id=current_user.id, transaction_type='expense').all()
+
+    total_income = sum(t.amount for t in income_transactions)
+    total_expenses = sum(t.amount for t in expense_transactions)
+    balance = total_income - total_expenses
 
     # Create a CSV file in memory
     def generate():
-        data = ['Amount,Category,Date\n']  # CSV headers
-        for transaction in transactions:
+        data = []
+        
+        # Income Section
+        data.append('Income Transactions\n')
+        data.append('Amount,Category,Date\n')  # CSV headers
+        for transaction in income_transactions:
             data.append(f'{transaction.amount},{transaction.category},{transaction.date.strftime("%Y-%m-%d")}\n')
-        return data
+
+        # Expense Section
+        data.append('\nExpense Transactions\n')
+        data.append('Amount,Category,Date\n')  # CSV headers
+        for transaction in expense_transactions:
+            data.append(f'{transaction.amount},{transaction.category},{transaction.date.strftime("%Y-%m-%d")}\n')
+
+        # Summary Section
+        data.append('\nSummary\n')
+        data.append(f'Total Income,Rs.{total_income:.2f}\n')
+        data.append(f'Total Expenses,Rs.{total_expenses:.2f}\n')
+        data.append(f'Balance,Rs.{balance:.2f}\n')
+
+        return ''.join(data)
 
     # Stream the CSV to the client
-    return Response(generate(), mimetype='text/csv', headers={"Content-Disposition": "attachment;filename=transactions.csv"})
-
+    return Response(generate(), mimetype='text/csv', headers={"Content-Disposition": "attachment;filename=transactions_report.csv"})
 
 
 @main.route("/export/pdf")
@@ -258,31 +303,75 @@ def export_transactions_pdf():
     # Add title
     c.drawString(100, height - 50, f"Transaction Report for {current_user.username}")
 
-    # Define transaction data for the table (with headers)
-    data = [['Amount', 'Category', 'Date']]
-    
-    # Add transaction data
-    transactions = Transaction.query.filter_by(user_id=current_user.id).all()
-    for transaction in transactions:
-        data.append([f"{transaction.amount}", f"{transaction.category}", f"{transaction.date.strftime('%Y-%m-%d')}"])
+    # Separate income and expense transactions
+    income_transactions = Transaction.query.filter_by(user_id=current_user.id, transaction_type='income').all()
+    expense_transactions = Transaction.query.filter_by(user_id=current_user.id, transaction_type='expense').all()
 
-    # Create the table with the data
-    table = Table(data)
+    # Define data for income and expenses
+    income_data = [['Amount', 'Category', 'Date']]
+    expense_data = [['Amount', 'Category', 'Date']]
 
-    # Style the table
-    table.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),  # Header background color
+    total_income = 0
+    total_expenses = 0
+
+    # Add income transactions
+    for transaction in income_transactions:
+        income_data.append([f"{transaction.amount}", f"{transaction.category}", f"{transaction.date.strftime('%Y-%m-%d')}"])
+        total_income += transaction.amount
+
+    # Add expense transactions
+    for transaction in expense_transactions:
+        expense_data.append([f"{transaction.amount}", f"{transaction.category}", f"{transaction.date.strftime('%Y-%m-%d')}"])
+        total_expenses += transaction.amount
+
+    balance = total_income - total_expenses
+
+    # Create the income table
+    income_table = Table(income_data)
+    income_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.green),  # Header background for income
         ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),  # Header text color
-        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),  # Center align text
-        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),  # Bold header font
-        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),  # Padding for header
-        ('BACKGROUND', (0, 1), (-1, -1), colors.beige),  # Background color for rows
-        ('GRID', (0, 0), (-1, -1), 1, colors.black),  # Add grid lines between cells
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+        ('BACKGROUND', (0, 1), (-1, -1), colors.lightgreen),
+        ('GRID', (0, 0), (-1, -1), 1, colors.black),
     ]))
 
-    # Set the table's position
-    table.wrapOn(c, width, height)
-    table.drawOn(c, 50, height - 200)  # Draw the table on the PDF at a specified position
+    # Create the expense table
+    expense_table = Table(expense_data)
+    expense_table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.red),  # Header background for expenses
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),  # Header text color
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+        ('BACKGROUND', (0, 1), (-1, -1), colors.salmon),
+        ('GRID', (0, 0), (-1, -1), 1, colors.black),
+    ]))
+
+    # Summary data for income, expenses, and balance
+    summary_data = [
+        ['Total Income', f"Rs.{total_income:.2f}"],
+        ['Total Expenses', f"Rs.{total_expenses:.2f}"],
+        ['Balance', f"Rs.{balance:.2f}"]
+    ]
+    summary_table = Table(summary_data)
+    summary_table.setStyle(TableStyle([
+        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+        ('FONTNAME', (0, 0), (-1, -1), 'Helvetica-Bold'),
+        ('GRID', (0, 0), (-1, -1), 1, colors.black),
+    ]))
+
+    # Set positions and add tables to the PDF
+    income_table.wrapOn(c, width, height)
+    income_table.drawOn(c, 50, height - 150)
+
+    expense_table.wrapOn(c, width, height)
+    expense_table.drawOn(c, 50, height - 300)
+
+    summary_table.wrapOn(c, width, height)
+    summary_table.drawOn(c, 50, height - 450)
 
     # Finalize the PDF
     c.showPage()
@@ -292,4 +381,4 @@ def export_transactions_pdf():
     buffer.seek(0)
 
     # Send the PDF as a response
-    return send_file(buffer, mimetype='application/pdf', as_attachment=True, download_name='transactions.pdf')
+    return send_file(buffer, mimetype='application/pdf', as_attachment=True, download_name='transactions_report.pdf')

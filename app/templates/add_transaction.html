@@ -1,26 +1,77 @@
-<form method="POST">
-    {{ form.hidden_tag() }}
-    <div>
-        {{ form.amount.label }}<br>
-        {{ form.amount(size=32) }}<br>
+{% extends "layout.html" %}
+{% block content %}
+
+<!-- Navigation Bar -->
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="#">Money Manager</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('main.home') }}">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('main.account') }}">Account</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('main.add_transaction') }}">Add Transaction</a>
+                </li>
+                <li class="nav-item"></li>
+                    <a class="nav-link" href="{{ url_for('main.filter_transactions') }}">Filter Transactions</a>  <!-- Added Filter Transactions -->
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('main.set_budget') }}">Set Budget</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('main.logout') }}">Logout</a>
+                </li>
+            </ul>
+        </div>
     </div>
-    <div>
-        {{ form.category.label }}<br>
-        {{ form.category() }}<br>
+</nav>
+
+<!-- Add Transaction Form -->
+<div class="container mt-5">
+    <h2 class="mb-4 text-center">Add New Transaction</h2>
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <form method="POST" class="bg-light p-4 border rounded shadow-sm">
+                {{ form.hidden_tag() }}
+                
+                <!-- Amount Field -->
+                <div class="mb-3">
+                    {{ form.amount.label(class="form-label") }}
+                    {{ form.amount(class="form-control", size=32) }}
+                </div>
+                
+                <!-- Category Field -->
+                <div class="mb-3">
+                    {{ form.category.label(class="form-label") }}
+                    {{ form.category(class="form-control") }}
+                </div>
+                
+                <!-- Date Field -->
+                <div class="mb-3">
+                    {{ form.date.label(class="form-label") }}
+                    {{ form.date(class="form-control") }}
+                </div>
+                
+                <!-- Transaction Type Field -->
+                <div class="mb-3">
+                    {{ form.transaction_type.label(class="form-label") }}
+                    {{ form.transaction_type(class="form-check-inline") }}
+                </div>
+                
+                <!-- Submit Button -->
+                <div class="d-grid">
+                    {{ form.submit(class="btn btn-primary btn-lg") }}
+                </div>
+            </form>
+        </div>
     </div>
-    <div>
-        {{ form.date.label }}<br>
-        {{ form.date() }}<br>
-    </div>
-    <div>
-        {{ form.is_recurring.label }}<br>
-        {{ form.is_recurring() }}<br>
-    </div>
-    <div>
-        {{ form.recurrence_frequency.label }}<br>
-        {{ form.recurrence_frequency() }}<br>
-    </div>
-    <div>
-        {{ form.submit() }}
-    </div>
-</form>
+</div>
+
+{% endblock %}

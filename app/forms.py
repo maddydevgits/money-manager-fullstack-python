@@ -3,7 +3,7 @@ from wtforms import StringField, PasswordField, SubmitField
 from wtforms.validators import DataRequired, Length, Email, EqualTo, ValidationError,Optional
 from app.models import User
 from wtforms import FloatField, DateField, SelectField
-from wtforms import BooleanField, SelectField
+from wtforms import BooleanField, SelectField, RadioField
 
 class RegistrationForm(FlaskForm):
     username = StringField('Username', validators=[DataRequired(), Length(min=2, max=20)])
@@ -36,6 +36,9 @@ class TransactionForm(FlaskForm):
     is_recurring = BooleanField('Recurring')
     recurrence_frequency = SelectField('Recurrence Frequency', choices=[('daily', 'Daily'), ('weekly', 'Weekly'), ('monthly', 'Monthly')], validators=[Optional()])
     
+    # New field for transaction type (income or expense)
+    transaction_type = RadioField('Transaction Type', choices=[('income', 'Income'), ('expense', 'Expense')], validators=[DataRequired()])
+
     submit = SubmitField('Add Transaction')
 
 class BudgetForm(FlaskForm):

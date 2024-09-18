@@ -1,6 +1,95 @@
 {% extends "layout.html" %}
 
 {% block content %}
-    <h1>Welcome to Money Manager</h1>
-    <p>This is the homepage.</p>
+<!-- Hero Section -->
+<section class="bg-primary text-white text-center py-5">
+    <div class="container">
+        <h1 class="display-4">Welcome to Money Manager</h1>
+        <p class="lead">Your ultimate platform to manage income, expenses, and budgets effortlessly.</p>
+        <a href="{{ url_for('main.register') }}" class="btn btn-light btn-lg">Get Started</a>
+    </div>
+</section>
+
+<!-- Benefits Section -->
+<section class="py-5 text-center">
+    <div class="container">
+        <h2 class="mb-5">Why Use Money Manager?</h2>
+        <div class="row">
+            <div class="col-md-4">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body">
+                        <i class="fas fa-dollar-sign fa-3x text-primary mb-3"></i>
+                        <h4 class="card-title">Track Income & Expenses</h4>
+                        <p class="card-text">Stay on top of your financial game by tracking all income and expenses in one place.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body">
+                        <i class="fas fa-chart-line fa-3x text-primary mb-3"></i>
+                        <h4 class="card-title">Detailed Reports</h4>
+                        <p class="card-text">Generate detailed financial reports to analyze your spending habits and make better decisions.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card shadow-sm h-100">
+                    <div class="card-body">
+                        <i class="fas fa-calendar-check fa-3x text-primary mb-3"></i>
+                        <h4 class="card-title">Set Budgets & Goals</h4>
+                        <p class="card-text">Set monthly budgets and goals, and get notifications when you're close to exceeding them.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Features Section -->
+<section class="bg-light py-5">
+    <div class="container text-center">
+        <h2 class="mb-5">Key Features</h2>
+        <div class="row">
+            <div class="col-md-4">
+                <div class="feature-icon mb-3">
+                    <i class="fas fa-sync fa-3x text-success"></i>
+                </div>
+                <h4>Recurring Transactions</h4>
+                <p>Automatically track recurring expenses and income, such as monthly bills or salary payments.</p>
+            </div>
+            <div class="col-md-4">
+                <div class="feature-icon mb-3">
+                    <i class="fas fa-file-csv fa-3x text-info"></i>
+                </div>
+                <h4>CSV & PDF Export</h4>
+                <p>Easily export your transactions and reports to CSV or PDF for record-keeping or further analysis.</p>
+            </div>
+            <div class="col-md-4">
+                <div class="feature-icon mb-3">
+                    <i class="fas fa-lock fa-3x text-danger"></i>
+                </div>
+                <h4>Secure & Private</h4>
+                <p>All your financial data is encrypted and protected to ensure your privacy and security.</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Call to Action Section -->
+<section class="py-5 bg-primary text-white text-center">
+    <div class="container">
+        <h2 class="mb-4">Start Managing Your Finances Today!</h2>
+        <p class="lead mb-4">Join thousands of users who trust Money Manager to keep track of their personal and business finances.</p>
+        <a href="{{ url_for('main.register') }}" class="btn btn-light btn-lg">Sign Up Now</a>
+    </div>
+</section>
+
+<!-- Footer -->
+<footer class="py-4 bg-dark text-white text-center">
+    <div class="container">
+        <p>&copy; 2024 Money Manager. All rights reserved.</p>
+    </div>
+</footer>
+
 {% endblock %}

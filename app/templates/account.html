@@ -1,19 +1,63 @@
 {% extends "layout.html" %}
 {% block content %}
-    <style>
-        .chart-size {
-            max-width: 400px;
-            max-height: 400px;
-            margin: auto;
-        }
-    </style>
+<style>
+    .chart-size {
+        max-width: 400px;
+        max-height: 400px;
+        margin: auto;
+    }
+</style>
+<!-- Navigation Bar -->
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <div class="container-fluid">
+        <a class="navbar-brand" href="#">Money Manager</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ms-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('main.home') }}">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('main.account') }}">Account</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('main.add_transaction') }}">Add Transaction</a>
+                </li>
+                <li class="nav-item"></li>
+                    <a class="nav-link" href="{{ url_for('main.filter_transactions') }}">Filter Transactions</a>  <!-- Added Filter Transactions -->
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('main.set_budget') }}">Set Budget</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('main.logout') }}">Logout</a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<!-- Main Content -->
+<div class="container mt-5">
+    <!-- Account Information -->
     <h2>Account Information</h2>
     <p>Welcome, {{ current_user.username }}!</p>
+
+    <!-- Export Buttons -->
     <a href="{{ url_for('main.export_transactions_csv') }}" class="btn btn-success">Export Transactions to CSV</a>
     <a href="{{ url_for('main.export_transactions_pdf') }}" class="btn btn-warning">Export Transactions to PDF</a>
-    
+
+    <!-- Income Tracking Summary -->
+    <h2>Monthly Summary</h2>
+    <p><strong>Total Income:</strong> Rs.{{ total_income }}</p>
+    <p><strong>Total Expenses:</strong> Rs.{{ total_expenses }}</p>
+    <p><strong>Net Balance:</strong> Rs.{{ balance }}</p>
+
+    <!-- Budget Section -->
     <h2>Your Budgets</h2>
-    <table class="table">
+    <table class="table table-striped">
         <thead>
             <tr>
                 <th>Category</th>
@@ -59,13 +103,16 @@
         });
     </script>
 
+    <!-- Transactions Section -->
     <h2>Your Transactions</h2>
-    <table class="table">
+    <table class="table table-striped">
         <thead>
             <tr>
                 <th>Amount</th>
                 <th>Category</th>
                 <th>Date</th>
+                <th>Type</th>
+                <th>Actions</th>
             </tr>
         </thead>
         <tbody>
@@ -74,11 +121,10 @@
                 <td>{{ transaction.amount }}</td>
                 <td>{{ transaction.category }}</td>
                 <td>{{ transaction.date.strftime('%Y-%m-%d') }}</td>
+                <td>{{ transaction.transaction_type }}</td>
                 <td>
                     <!-- Edit Button -->
                     <a href="{{ url_for('main.edit_transaction', transaction_id=transaction.id) }}" class="btn btn-warning btn-sm">Edit</a>
-                </td>
-                <td>
                     <!-- Delete Button -->
                     <form method="POST" action="{{ url_for('main.delete_transaction', transaction_id=transaction.id) }}" style="display:inline;">
                         <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to delete this transaction?');">Delete</button>
@@ -89,10 +135,12 @@
         </tbody>
     </table>
 
+    <!-- Add Transaction Button -->
     <a href="{{ url_for('main.add_transaction') }}" class="btn btn-primary">Add Transaction</a>
 
+    <!-- Budget Alerts -->
     {% if budget_alerts %}
-    <div class="alert alert-warning">
+    <div class="alert alert-warning mt-4">
         <ul>
             {% for alert in budget_alerts %}
                 <li>{{ alert }}</li>
@@ -100,5 +148,6 @@
         </ul>
     </div>
     {% endif %}
+</div>
 
 {% endblock %}
