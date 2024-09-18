@@ -1,0 +1,23 @@
+{% extends "layout.html" %}
+
+{% block content %}
+    <h2>Set Monthly Budget</h2>
+    <form method="POST">
+        {{ form.hidden_tag() }}
+        <div>
+            {{ form.category.label }}<br>
+            {{ form.category() }}<br>
+        </div>
+        <div>
+            {{ form.amount.label }}<br>
+            {{ form.amount() }}<br>
+        </div>
+        <div>
+            {{ form.month.label }}<br>
+            {{ form.month() }}<br>
+        </div>
+        <div>
+            {{ form.submit() }}
+        </div>
+    </form>
+{% endblock %}

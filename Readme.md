@@ -1,4 +1,3 @@
-
 # Money Manager
 
 Money Manager is a web-based personal finance management application built using Python Flask. It allows users to track their income, expenses, and savings. With an intuitive interface and detailed reports, users can manage their finances, set budgets, and analyze their spending patterns.

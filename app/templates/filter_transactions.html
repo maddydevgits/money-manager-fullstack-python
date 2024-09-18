@@ -1,0 +1,47 @@
+{% extends "layout.html" %}
+
+{% block content %}
+    <h2>Filter Transactions</h2>
+    <form method="POST">
+        {{ form.hidden_tag() }}
+        <div>
+            {{ form.keyword.label }}<br>
+            {{ form.keyword() }}<br>
+        </div>
+        <div>
+            {{ form.category.label }}<br>
+            {{ form.category() }}<br>
+        </div>
+        <div>
+            {{ form.start_date.label }}<br>
+            {{ form.start_date() }}<br>
+        </div>
+        <div>
+            {{ form.end_date.label }}<br>
+            {{ form.end_date() }}<br>
+        </div>
+        <div>
+            {{ form.submit() }}
+        </div>
+    </form>
+
+    <h2>Filtered Transactions</h2>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Amount</th>
+                <th>Category</th>
+                <th>Date</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for transaction in transactions %}
+            <tr>
+                <td>{{ transaction.amount }}</td>
+                <td>{{ transaction.category }}</td>
+                <td>{{ transaction.date.strftime('%Y-%m-%d') }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

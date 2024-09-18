@@ -1,0 +1,26 @@
+<form method="POST">
+    {{ form.hidden_tag() }}
+    <div>
+        {{ form.amount.label }}<br>
+        {{ form.amount(size=32) }}<br>
+    </div>
+    <div>
+        {{ form.category.label }}<br>
+        {{ form.category() }}<br>
+    </div>
+    <div>
+        {{ form.date.label }}<br>
+        {{ form.date() }}<br>
+    </div>
+    <div>
+        {{ form.is_recurring.label }}<br>
+        {{ form.is_recurring() }}<br>
+    </div>
+    <div>
+        {{ form.recurrence_frequency.label }}<br>
+        {{ form.recurrence_frequency() }}<br>
+    </div>
+    <div>
+        {{ form.submit() }}
+    </div>
+</form>
